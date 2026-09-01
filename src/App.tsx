@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { PublicLayout } from '@/layouts/PublicLayout'
 import { AdminLayout } from '@/layouts/AdminLayout'
@@ -18,8 +19,22 @@ import { AdminCategories } from '@/pages/admin/Categories'
 import { AdminMusic } from '@/pages/admin/Music'
 import { AdminAppearance } from '@/pages/admin/Appearance'
 import { AdminSettings } from '@/pages/admin/Settings'
+import { MusicService } from '@/services/MusicService'
 
 export default function App() {
+  useEffect(() => {
+    MusicService.setPlaylist([
+      {
+        id: '1',
+        title: 'Love',
+        artist: 'Atlas Audio',
+        license: 'Pixabay License',
+        source: 'https://pixabay.com/music/',
+        url: 'https://hudyofqzdeiunazrnrpz.supabase.co/storage/v1/object/public/memories/atlasaudio-love-522433.mp3',
+      },
+    ])
+  }, [])
+
   return (
     <Routes>
       <Route element={<PublicLayout />}>
@@ -47,4 +62,4 @@ export default function App() {
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
-}
+  }
