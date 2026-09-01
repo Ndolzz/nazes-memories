@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { PublicLayout } from '@/layouts/PublicLayout'
 import { AdminLayout } from '@/layouts/AdminLayout'
@@ -21,20 +20,18 @@ import { AdminAppearance } from '@/pages/admin/Appearance'
 import { AdminSettings } from '@/pages/admin/Settings'
 import { MusicService } from '@/services/MusicService'
 
-export default function App() {
-  useEffect(() => {
-    MusicService.setPlaylist([
-      {
-        id: '1',
-        title: 'Love',
-        artist: 'Atlas Audio',
-        license: 'Pixabay License',
-        source: 'https://pixabay.com/music/',
-        url: 'https://hudyofqzdeiunazrnrpz.supabase.co/storage/v1/object/public/memories/atlasaudio-love-522433.mp3',
-      },
-    ])
-  }, [])
+MusicService.setPlaylist([
+  {
+    id: '1',
+    title: 'Love',
+    artist: 'Atlas Audio',
+    license: 'Pixabay License',
+    source: 'https://pixabay.com/music/',
+    url: 'https://hudyofqzdeiunazrnrpz.supabase.co/storage/v1/object/public/memories/atlasaudio-love-522433.mp3',
+  },
+])
 
+export default function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
