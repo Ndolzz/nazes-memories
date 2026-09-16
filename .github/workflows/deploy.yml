@@ -22,8 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
+          # cache: npm dinonaktifkan karena package-lock.json tidak
+          # di-commit; npm ci juga diganti npm install karena butuh lockfile.
+      - run: npm install
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
