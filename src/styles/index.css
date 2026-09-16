@@ -4,6 +4,69 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
+
+  /* Design tokens — CSS variables (RGB triplet) yang dipakai Tailwind
+     lewat rgb(var(--c-*) / <alpha-value>) di tailwind.config.js.
+     Light: soft blue -> lavender -> subtle pink, paper tetap terang.
+     Dark : deep navy -> dark blue -> purple — bukan pure black, card
+     tetap terpisah jelas dari background. */
+  :root {
+    --c-ink: 36 18 39;
+    --c-ink-soft: 74 51 80;
+    --c-paper: 255 251 254;
+    --c-paper-sunk: 248 239 247;
+
+    --c-rose-50: 253 241 248;
+    --c-rose-100: 251 225 241;
+    --c-rose-200: 248 207 232;
+    --c-rose-300: 242 169 204;
+    --c-rose-400: 234 147 191;
+    --c-rose-500: 219 91 160;
+    --c-rose-600: 193 61 138;
+    --c-rose-700: 156 44 111;
+
+    --c-violet-50: 246 242 252;
+    --c-violet-100: 239 228 250;
+    --c-violet-200: 226 208 245;
+    --c-violet-300: 185 140 224;
+    --c-violet-400: 160 112 212;
+    --c-violet-500: 138 84 196;
+    --c-violet-600: 110 58 168;
+    --c-violet-700: 78 39 121;
+    --c-violet-900: 43 18 64;
+  }
+
+  html.dark {
+    color-scheme: dark;
+
+    --c-ink: 240 237 250;
+    --c-ink-soft: 198 194 224;
+    --c-paper: 19 21 42;
+    --c-paper-sunk: 25 27 52;
+
+    --c-rose-50: 61 33 57;
+    --c-rose-100: 77 41 68;
+    --c-rose-200: 98 54 85;
+    --c-rose-300: 238 160 200;
+    --c-rose-400: 236 141 190;
+    --c-rose-500: 226 110 172;
+    --c-rose-600: 233 130 186;
+    --c-rose-700: 240 158 208;
+
+    --c-violet-50: 41 34 71;
+    --c-violet-100: 52 43 88;
+    --c-violet-200: 66 55 108;
+    --c-violet-300: 186 152 229;
+    --c-violet-400: 200 170 238;
+    --c-violet-500: 172 134 226;
+    --c-violet-600: 186 150 236;
+    --c-violet-700: 202 168 243;
+    --c-violet-900: 232 222 250;
+  }
+
+  body {
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after {
@@ -31,5 +94,193 @@
     animation: shimmer 1.6s linear infinite;
   }
 
+  html.dark .skeleton {
+    background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+  }
+
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+
+/* Keyframes shimmer didefinisikan langsung di sini agar selalu tersedia
+   untuk .skeleton (keyframes di tailwind.config hanya di-emit bersama
+   utility animation-nya). */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================================
+   AMBIENT BACKGROUND — "ruang penyimpanan kenangan digital"
+   Dipakai oleh <AmbientBackground /> (src/components/AmbientBackground
+   .tsx) dan .ambient-featured-glow (hero Home).
+
+   Susunan layer (belakang -> depan):
+     1. .ambient-gradient  — gradient dasar, bergerak sangat lambat
+     2. .ambient-orb       — orbs blur besar, kecepatan beda (depth)
+     3. .ambient-particle  — partikel cahaya kecil mengambang
+     4. .ambient-sheen     — gerak cahaya sangat halus
+     (di atasnya: main UI -> memory cards)
+
+   Semua animasi hanya menggerakkan transform + opacity (GPU friendly,
+   ringan), sangat lambat, dan tidak pernah berkedip. Background berada
+   di belakang seluruh UI (z-index -1, pointer-events none).
+   ============================================================ */
+
+.ambient-root {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* --- Layer 1: gradient dasar --------------------------------- */
+.ambient-gradient {
+  position: absolute;
+  inset: -60%; /* lebih besar dari viewport supaya bisa bergeser */
+  background: linear-gradient(165deg,
+    #e9f2fe 0%,
+    #efe8fb 38%,
+    #f7ebf7 68%,
+    #fbe9f0 100%);
+  animation: ambient-gradient-move 90s ease-in-out infinite alternate;
+  will-change: transform;
+}
+html.dark .ambient-gradient {
+  background: linear-gradient(165deg,
+    #101430 0%,
+    #171b3d 35%,
+    #221844 68%,
+    #2a1a46 100%);
+}
+
+@keyframes ambient-gradient-move {
+  from { transform: translate3d(-3%, -2%, 0) rotate(-1.5deg); }
+  to   { transform: translate3d(3%, 2%, 0) rotate(1.5deg) scale(1.05); }
+}
+
+/* --- Layer 2: soft blurred orbs ------------------------------- */
+.ambient-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  will-change: transform;
+}
+html.dark .ambient-orb { filter: blur(64px); }
+
+.ambient-orb--blue   { background: radial-gradient(circle, rgba(147,186,255,0.5), rgba(147,186,255,0) 70%); }
+.ambient-orb--violet { background: radial-gradient(circle, rgba(185,140,224,0.45), rgba(185,140,224,0) 70%); }
+.ambient-orb--pink   { background: radial-gradient(circle, rgba(242,169,204,0.42), rgba(242,169,204,0) 70%); }
+
+html.dark .ambient-orb--blue   { background: radial-gradient(circle, rgba(66,100,196,0.4), rgba(66,100,196,0) 70%); }
+html.dark .ambient-orb--violet { background: radial-gradient(circle, rgba(112,60,172,0.5), rgba(112,60,172,0) 70%); }
+html.dark .ambient-orb--pink   { background: radial-gradient(circle, rgba(196,86,152,0.28), rgba(196,86,152,0) 70%); }
+
+/* Tiga keyframes dengan arah/kecepatan berbeda -> depth lembut. */
+@keyframes ambient-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(9vw, 6vh, 0) scale(1.12); }
+}
+@keyframes ambient-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1.05); }
+  to   { transform: translate3d(-8vw, -5vh, 0) scale(0.94); }
+}
+@keyframes ambient-drift-c {
+  from { transform: translate3d(0, 0, 0) scale(0.96); }
+  to   { transform: translate3d(6vw, -7vh, 0) scale(1.08); }
+}
+
+/* --- Layer 3: floating light particles ------------------------ */
+/* Posisi/ukuran/durasi per partikel di-inject lewat custom properties
+   (--d, --delay, --dx, --dy, --o-max) dari AmbientBackground.tsx. */
+.ambient-particle {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,255,255,0.35) 60%, rgba(255,255,255,0) 100%);
+  box-shadow: 0 0 6px rgba(185,140,224,0.35);
+  animation: ambient-float var(--d, 26s) ease-in-out var(--delay, 0s) infinite alternate;
+  will-change: transform, opacity;
+}
+html.dark .ambient-particle {
+  background: radial-gradient(circle, rgba(226,216,255,0.9), rgba(226,216,255,0.28) 60%, rgba(226,216,255,0) 100%);
+  box-shadow: 0 0 6px rgba(172,134,226,0.4);
+}
+
+@keyframes ambient-float {
+  from { transform: translate3d(0, 0, 0); opacity: 0.22; }
+  to   { transform: translate3d(var(--dx, 12px), var(--dy, -22px), 0); opacity: var(--o-max, 0.7); }
+}
+
+/* --- Layer 4: subtle light movement --------------------------- */
+.ambient-sheen {
+  position: absolute;
+  inset: -25%;
+  background: radial-gradient(ellipse 55% 40% at 74% 16%, rgba(255,255,255,0.4), rgba(255,255,255,0) 70%);
+  animation: ambient-breathe 32s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+html.dark .ambient-sheen {
+  background: radial-gradient(ellipse 55% 40% at 74% 16%, rgba(152,132,222,0.14), rgba(152,132,222,0) 70%);
+}
+
+@keyframes ambient-breathe {
+  from { transform: translate3d(-2%, -1%, 0) scale(1); opacity: 0.55; }
+  to   { transform: translate3d(2%, 2%, 0) scale(1.07); opacity: 0.95; }
+}
+
+/* --- Featured glow (hero Home / featured memory) --------------- */
+/* Sedikit lebih kuat dari ambient global, tetap lembut, dan tidak
+   mengganggu teks/media di atasnya. */
+.ambient-featured-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(760px, 92vw);
+  height: min(540px, 72vh);
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center,
+    rgba(255,255,255,0.5) 0%,
+    rgba(242,169,204,0.26) 34%,
+    rgba(185,140,224,0.18) 56%,
+    rgba(185,140,224,0) 72%);
+  transform: translate(-50%, -56%);
+  filter: blur(26px);
+  animation: ambient-glow-pulse 26s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+html.dark .ambient-featured-glow {
+  background: radial-gradient(ellipse at center,
+    rgba(186,152,229,0.2) 0%,
+    rgba(226,110,172,0.14) 40%,
+    rgba(186,152,229,0) 70%);
+}
+
+@keyframes ambient-glow-pulse {
+  from { transform: translate(-50%, -56%) scale(1); opacity: 0.7; }
+  to   { transform: translate(-50%, -56%) scale(1.08); opacity: 1; }
+}
+
+/* --- Mobile / perangkat low-end --------------------------------
+   Kurangi partikel & blur, perlambat gradient — scrolling tetap lancar. */
+@media (max-width: 640px) {
+  .ambient-particle--extra { display: none; } /* 26 -> 13 partikel */
+  .ambient-orb--extra { display: none; }      /* 4 -> 3 orbs */
+  .ambient-orb { filter: blur(48px); }
+  html.dark .ambient-orb { filter: blur(40px); }
+  .ambient-gradient { animation-duration: 120s; }
+  .ambient-sheen { animation-duration: 44s; }
+}
+
+/* --- Reduced motion ---------------------------------------------
+   Matikan seluruh animated background; gradient statis tetap terlihat
+   bagus karena posisi awal setiap layer memang sudah final. */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-gradient,
+  .ambient-orb,
+  .ambient-particle,
+  .ambient-sheen,
+  .ambient-featured-glow {
+    animation: none !important;
+  }
 }

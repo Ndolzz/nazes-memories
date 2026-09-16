@@ -67,7 +67,7 @@ export function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={memory.title}
-      className="fixed inset-0 z-[90] bg-ink/95 flex flex-col"
+      className="fixed inset-0 z-[90] bg-night/95 flex flex-col"
       onClick={() => setShowControls((s) => !s)}
     >
       <AnimatePresence>
@@ -167,7 +167,7 @@ export function Lightbox({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             onClick={(e) => e.stopPropagation()}
-            className="px-5 py-4 bg-ink text-white"
+            className="px-5 py-4 bg-night text-white"
           >
             <p className="font-display text-lg">{memory.title}</p>
             <p className="text-white/60 text-sm mt-0.5">{formatDate(memory.captured_at)}</p>

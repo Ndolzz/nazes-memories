@@ -21,7 +21,7 @@ export function Search() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Cari judul, deskripsi, tag, kategori, atau lokasi…"
-          className="w-full rounded-full border border-violet-100 bg-white pl-11 pr-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+          className="w-full rounded-full border border-violet-100 bg-paper pl-11 pr-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
         />
       </div>
 

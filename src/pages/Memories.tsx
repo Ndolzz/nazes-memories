@@ -35,7 +35,7 @@ export function Memories() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari judul, tag, lokasi…"
-              className="w-full rounded-full border border-violet-100 bg-white pl-9 pr-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+              className="w-full rounded-full border border-violet-100 bg-paper pl-9 pr-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
             />
           </div>
         </div>

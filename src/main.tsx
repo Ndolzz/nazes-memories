@@ -7,6 +7,19 @@ import './styles/index.css'
 // Selesaikan trik redirect dari public/404.html (GitHub Pages tidak
 // mendukung SPA routing native). Jika ada path tersimpan, ganti URL browser
 // ke path itu sebelum React Router membaca lokasi saat ini.
+// Terapkan tema tersimpan sebelum render pertama supaya mode gelap tetap
+// aktif di halaman publik (bukan hanya saat halaman admin terbuka) dan
+// tidak ada flash warna terang saat load.
+try {
+  const savedThemeMode = localStorage.getItem('naze:theme-mode') || 'system'
+  const prefersDark =
+    savedThemeMode === 'dark' ||
+    (savedThemeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.classList.toggle('dark', prefersDark)
+} catch {
+  /* localStorage tidak tersedia — biarkan tema terang */
+}
+
 const redirect = sessionStorage.getItem('naze:redirect')
 if (redirect) {
   sessionStorage.removeItem('naze:redirect')

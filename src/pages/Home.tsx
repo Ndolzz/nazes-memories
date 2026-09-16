@@ -28,9 +28,10 @@ export function Home() {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-naze-gradient-soft" aria-hidden="true" />
-      <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-rose-300/30 blur-3xl" aria-hidden="true" />
-      <div className="absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-violet-300/30 blur-3xl" aria-hidden="true" />
+      {/* Featured glow — ambient glow di sekitar hero/featured memory,
+          sedikit lebih kuat daripada background global tetapi tetap lembut
+          (class .ambient-featured-glow didefinisikan di index.css). */}
+      <div className="ambient-featured-glow" aria-hidden="true" />
 
       <div className="relative max-w-3xl mx-auto px-6 pt-20 pb-24 text-center">
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -70,7 +71,7 @@ export function Home() {
           <button
             onClick={surpriseMe}
             disabled={loadingRandom}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-violet-200 text-ink-soft font-medium text-sm hover:bg-white transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-violet-200 text-ink-soft font-medium text-sm hover:bg-paper transition-colors disabled:opacity-60"
           >
             <Icon name="random" size={16} />
             {loadingRandom ? 'Mencari…' : 'Surprise Me'}

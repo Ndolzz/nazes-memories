@@ -13,7 +13,7 @@ export function MemoryCard({ memory, layout }: { memory: Memory; layout: Gallery
   return (
     <Link
       to={`/memory/${memory.id}`}
-      className="group relative block overflow-hidden rounded-xl2 bg-violet-50 shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-600"
+      className="group relative block overflow-hidden rounded-xl2 bg-violet-50 shadow-card transition-shadow duration-500 ease-out group-hover:shadow-glow group-active:shadow-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-600"
     >
       <div className={`relative w-full overflow-hidden ${aspect}`}>
         <img
@@ -22,7 +22,7 @@ export function MemoryCard({ memory, layout }: { memory: Memory; layout: Gallery
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-night/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {memory.media_type === 'video' && (
           <span className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-ink/50 text-white backdrop-blur-sm">

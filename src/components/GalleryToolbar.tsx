@@ -31,7 +31,7 @@ export function GalleryToolbar({
             aria-label={l.label}
             title={l.label}
             className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-              layout === l.value ? 'bg-white text-violet-600 shadow-card' : 'text-ink-soft/50 hover:text-ink-soft'
+              layout === l.value ? 'bg-paper text-violet-600 shadow-card' : 'text-ink-soft/50 hover:text-ink-soft'
             }`}
           >
             <Icon name={l.icon} size={16} />
@@ -42,7 +42,7 @@ export function GalleryToolbar({
       <select
         value={sort}
         onChange={(e) => onSort(e.target.value as SortMode)}
-        className="text-sm rounded-full border border-violet-100 bg-white px-3 py-1.5 text-ink-soft focus-visible:outline-none"
+        className="text-sm rounded-full border border-violet-100 bg-paper px-3 py-1.5 text-ink-soft focus-visible:outline-none"
         aria-label="Urutkan"
       >
         <option value="newest">Terbaru</option>
