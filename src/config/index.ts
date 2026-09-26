@@ -23,6 +23,12 @@ export const STORAGE_PATHS = {
   thumbnails: 'thumbnails'
 } as const
 
+// VAPID public key untuk push notification "memory baru" (Web Push).
+// Hanya PUBLIC key yang boleh di frontend — private key hidup di GitHub
+// Secrets dan dipakai scripts/notify.mjs di CI. Jika belum diisi, tombol
+// notifikasi tidak dirender (bukan tombol palsu).
+export const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+
 export const BRAND = {
   name: "Naze's Memories",
   tagline: 'Every picture has a story.'

@@ -137,6 +137,55 @@ $$;
 
 grant execute on function public.get_random_memory() to anon, authenticated;
 
+-- 8) Push notification: langganan browser ------------------------------------
+-- Pengunjung bisa men-subscribe notifikasi "memory baru". Subscription
+-- (endpoint + keys) disimpan di tabel ini. TIDAK ada policy RLS select/
+-- insert langsung — semua akses publik hanya lewat RPC save/delete di bawah,
+-- supaya endpoint (yang bersifat rahasia per-browser) tidak bisa dibaca
+-- sembarang orang lewat anon key. Pengiriman notifikasi dilakukan oleh
+-- GitHub Action terjadwal (scripts/notify.mjs) memakai service role key.
+create table if not exists public.push_subscriptions (
+  endpoint text primary key,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.push_subscriptions enable row level security;
+
+create or replace function public.save_push_subscription(sub jsonb)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.push_subscriptions (endpoint, p256dh, auth)
+  values (
+    sub->>'endpoint',
+    sub->'keys'->>'p256dh',
+    sub->'keys'->>'auth'
+  )
+  on conflict (endpoint) do update
+    set p256dh = excluded.p256dh,
+        auth = excluded.auth,
+        created_at = now();
+end;
+$$;
+
+grant execute on function public.save_push_subscription(jsonb) to anon, authenticated;
+
+-- Parameter sengaja dinamai `p_endpoint` — jika bernama `endpoint`, ia akan
+-- menbayangi kolom `endpoint` di WHERE dan query menjadi ambigu.
+create or replace function public.delete_push_subscription(p_endpoint text)
+returns void
+language sql
+security definer
+as $
+  delete from public.push_subscriptions where endpoint = p_endpoint;
+$;
+
+grant execute on function public.delete_push_subscription(text) to anon, authenticated;
+
 -- ============================================================================
 -- Setup Storage (dilakukan lewat Dashboard, bukan SQL):
 -- 1. Storage > New bucket > nama: "memories" > Public bucket: ON

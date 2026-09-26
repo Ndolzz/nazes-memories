@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Icon, type IconName } from '@/components/Icon'
+import { PushBell } from '@/components/PushBell'
 
 const items: { to: string; label: string; icon: IconName }[] = [
   { to: '/timeline', label: 'Timeline', icon: 'timeline' },
@@ -23,6 +24,9 @@ export function More() {
           {i.label}
         </Link>
       ))}
+      {/* Toggle notifikasi "memory baru" — hanya muncul jika push
+          didukung & VAPID key terisi (lihat PushBell.tsx). */}
+      <PushBell variant="row" />
     </div>
   )
 }
