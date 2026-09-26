@@ -42,6 +42,7 @@ function applyFilters(query: any, filters: MemoryFilters) {
       query = query.lte('captured_at', new Date(filters.customTo).toISOString())
     }
   }
+
   return query
 }
 
@@ -59,6 +60,27 @@ function sortColumn(sort: SortMode): { column: string; ascending: boolean } {
     case 'newest':
     default:
       return { column: 'captured_at', ascending: false }
+  }
+}
+
+// Dedup per-session untuk view counter: satu browser hanya menambah views
+// satu kali per memory per session. Ini mitigasi client-side untuk mencegah
+// penggelembungan angka lewat refresh berulang (lihat schema.sql bagian 6).
+function hasViewedThisSession(id: string): boolean {
+  try {
+    return sessionStorage.getItem(`nzm-viewed:${id}`) === '1'
+  } catch {
+    // sessionStorage bisa diblokir (private mode ketat); jangan sampai
+    // halaman error hanya karena dedup gagal.
+    return false
+  }
+}
+
+function markViewedThisSession(id: string): void {
+  try {
+    sessionStorage.setItem(`nzm-viewed:${id}`, '1')
+  } catch {
+    /* best-effort saja */
   }
 }
 
@@ -95,6 +117,9 @@ class DatabaseServiceImpl {
   }
 
   async incrementViews(id: string): Promise<void> {
+    // Dedup per-session — tanpa ini tiap refresh halaman detail menambah counter.
+    if (hasViewedThisSession(id)) return
+    markViewedThisSession(id)
     const client = requireSupabase()
     // RPC atomik di database (lihat schema.sql: increment_memory_views) —
     // menghindari race condition dari read-then-write di client.
@@ -138,11 +163,12 @@ class DatabaseServiceImpl {
     if (error) throw new Error(error.message)
   }
 
-  async setFavorite(id: string, value: boolean): Promise<void> {
+  async setFavorite(id: string): Promise<void> {
     const client = requireSupabase()
-    // Publik hanya boleh memanggil RPC toggle_favorite (lihat schema.sql), bukan UPDATE langsung —
-    // RPC ini membatasi kolom yang bisa diubah supaya tidak membuka celah manipulasi data lain.
-    const { error } = await client.rpc('toggle_favorite', { memory_id: id, value })
+    // Publik hanya boleh memanggil RPC toggle_favorite (lihat schema.sql), bukan UPDATE langsung.
+    // RPC beralih server-side (NOT is_favorite) dan TIDAK menerima nilai dari client —
+    // jadi pengunjung tidak bisa men-set is_favorite galeri secara sembarangan.
+    const { error } = await client.rpc('toggle_favorite', { memory_id: id })
     if (error) throw new Error(error.message)
   }
 

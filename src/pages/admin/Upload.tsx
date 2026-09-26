@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { Icon } from '@/components/Icon'
 import { validateMediaFile } from '@/utils/validation'
 import { compressImageIfNeeded, generateImageThumbnail, generateVideoPosterFrame } from '@/utils/media'
+import { extractExifMetadata } from '@/utils/exif'
 import { StorageService } from '@/services/StorageService'
 import { DatabaseService } from '@/services/DatabaseService'
 import { uuid } from '@/utils/format'
@@ -9,7 +10,7 @@ import type { UploadTask } from '@/types'
 
 // Upload interface admin: drag & drop, multi-file, preview, progress per file,
 // retry, delete dari antrian, lalu bulk metadata editing sebelum disimpan.
-// Alur nyata: validasi → compress → upload storage → simpan metadata → refresh (spec §9, §17).
+// Alur nyata: validasi → baca EXIF → compress → upload storage → simpan metadata → refresh (spec §9, §17).
 export function AdminUpload() {
   const [tasks, setTasks] = useState<UploadTask[]>([])
   const [dragOver, setDragOver] = useState(false)
@@ -45,6 +46,10 @@ export function AdminUpload() {
 
     try {
       updateTask(task.id, { status: 'compressing' })
+      // EXIF dibaca dari file ASLI, sebelum kompresi — browser-image-compression
+      // dan canvas menghasilkan file baru tanpa metadata EXIF. Best-effort:
+      // file tanpa EXIF mengembalikan null dan fallback ke tanggal upload.
+      const exif = await extractExifMetadata(task.file)
       const processedFile = mediaType === 'image' ? await compressImageIfNeeded(task.file) : task.file
 
       updateTask(task.id, { status: 'uploading', progress: 5 })
@@ -73,10 +78,12 @@ export function AdminUpload() {
         thumbnail_url: thumbnailUrl,
         media_type: mediaType,
         file_path: mediaPath,
-        captured_at: new Date().toISOString(),
+        // Tanggal momen dari EXIF bila ada; jika tidak, fallback ke tanggal upload.
+        captured_at: exif.capturedAt ?? new Date().toISOString(),
         category: sharedCategory || null,
         tags: sharedTags ? sharedTags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-        location: null,
+        // Lokasi GPS dari EXIF (mis. "6.2088° S, 106.8456° E"), bila ada.
+        location: exif.location,
         sort_order: 0
       })
 
