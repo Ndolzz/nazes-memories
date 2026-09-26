@@ -36,7 +36,7 @@ Naze's Memories adalah galeri foto/video pribadi dengan nuansa *digital scrapboo
 
 - Galeri dengan 5 mode layout: Grid, Masonry, Editorial, Compact, Timeline
 - Lightbox fullscreen dengan zoom, swipe, keyboard nav, share, download
-- Upload multi-file dengan drag & drop, kompresi gambar otomatis, thumbnail otomatis
+- Upload multi-file dengan drag & drop, kompresi gambar otomatis, thumbnail otomatis, dan auto-fill tanggal + lokasi dari EXIF
 - Admin dashboard: overview statistik, bulk edit/delete, kategori, appearance, settings
 - Pencarian (debounced) + filter (tipe, kategori, tanggal) + sort
 - Fitur "Surprise Me" — memory acak lewat RPC database
@@ -53,6 +53,7 @@ Naze's Memories adalah galeri foto/video pribadi dengan nuansa *digital scrapboo
 |---|---|
 | Frontend | React 18 + Vite + TypeScript + Tailwind CSS |
 | Animasi | Framer Motion |
+| Metadata EXIF | [exifr](https://github.com/MikeKovarik/exifr) |
 | Backend | Supabase (Auth + PostgreSQL + Storage), free tier |
 | Hosting | GitHub Pages (lewat GitHub Actions) |
 
@@ -68,7 +69,7 @@ src/
   services/     AuthService, DatabaseService, StorageService, MusicService
   hooks/        useAuth, useMemories, useTheme, useDebouncedValue
   lib/          Inisialisasi Supabase client
-  utils/        Validasi, kompresi media, formatting
+  utils/        Validasi, kompresi media, EXIF, formatting
   types/        Tipe TypeScript bersama
   config/       Konstanta & environment
 ```
@@ -108,6 +109,8 @@ Tanpa `.env` terisi, aplikasi otomatis berjalan dalam **Demo Mode** (ditandai je
 2. Buka **SQL Editor**, jalankan seluruh isi `supabase/schema.sql`.
 3. Ambil `Project URL` dan `anon public key` dari **Project Settings > API**, masukkan ke `.env`.
 
+> **Upgrade dari versi lama**: cukup jalankan ulang `supabase/schema.sql` — semua objek bersifat idempoten (`create or replace` / `if not exists`), termasuk perbaikan RPC `toggle_favorite` (toggle server-side, tanpa parameter `value` dari client).
+
 ## Skema database
 
 Tabel utama `memories` (lihat `supabase/schema.sql` untuk definisi lengkap):
@@ -121,14 +124,14 @@ Tabel utama `memories` (lihat `supabase/schema.sql` untuk definisi lengkap):
 | thumbnail_url | text | nullable |
 | media_type | text | `image` \| `video` |
 | file_path | text | path di Storage, untuk keperluan hapus |
-| captured_at | timestamptz | tanggal momen terjadi |
+| captured_at | timestamptz | tanggal momen terjadi (auto-fill dari EXIF saat upload) |
 | created_at | timestamptz | tanggal upload |
 | category | text | nullable |
 | tags | text[] | |
-| location | text | nullable |
+| location | text | nullable (auto-fill dari GPS EXIF, mis. "6.2088° S, 106.8456° E") |
 | is_favorite | boolean | |
 | sort_order | integer | untuk urutan kustom |
-| views | integer | |
+| views | integer | estimasi (dedup per-session di client) |
 
 Index dibuat pada `captured_at`, `category`, `is_favorite`, `sort_order`, dan `tags` (GIN) untuk query yang sering dipakai.
 
@@ -150,8 +153,8 @@ Kebijakan RLS lengkap ada di `supabase/schema.sql`:
 
 - **Publik**: hanya bisa `SELECT` dari `memories` dan `app_settings`.
 - **Admin**: bisa `INSERT` / `UPDATE` / `DELETE`, ditentukan lewat fungsi `is_admin()` yang membaca `app_metadata.role` dari JWT — **bukan** pengecekan email hardcode.
-- **Favorite publik**: dilakukan lewat RPC `toggle_favorite()` yang hanya boleh mengubah kolom `is_favorite`, bukan `UPDATE` bebas — mencegah manipulasi data lain oleh pengunjung.
-- **View counter**: lewat RPC `increment_memory_views()` yang atomik di database.
+- **Favorite publik**: dilakukan lewat RPC `toggle_favorite()` yang hanya boleh mengubah kolom `is_favorite`, bukan `UPDATE` bebas — mencegah manipulasi data lain oleh pengunjung. RPC beralih **server-side** (`NOT is_favorite`) dan tidak menerima nilai dari client, jadi pengunjung tidak bisa men-set/meng-unset seluruh galeri secara sembarangan.
+- **View counter**: lewat RPC `increment_memory_views()` yang atomik di database, dengan dedup per-session di client; angka `views` diperlakukan sebagai estimasi.
 
 ## Setup admin
 
@@ -200,12 +203,13 @@ SPA routing di GitHub Pages ditangani lewat trik `public/404.html` (redirect ke 
 | Galeri publik kosong padahal sudah upload | RLS SELECT belum aktif | Jalankan ulang `supabase/schema.sql` |
 | Upload gagal terus | Bucket Storage belum dibuat/publik | Cek Storage > memories > Public bucket |
 | Login admin gagal terus meski password benar | `app_metadata.role` belum di-set | Set `{ "role": "admin" }` di user tsb |
+| Favorit tidak berubah sama sekali | RPC `toggle_favorite` lama (versi lama masih di DB) | Jalankan ulang `supabase/schema.sql` (create-or-replace) |
 | Routing 404 setelah refresh di GitHub Pages | `404.html` belum ter-deploy | Pastikan file `public/404.html` ikut ter-build ke `dist/` |
 
 ## Pertimbangan free-tier
 
 - Supabase free tier: 500MB database, 1GB storage, 2GB bandwidth/bulan — cukup untuk ribuan foto terkompresi.
-- Gambar dikompresi otomatis di browser sebelum upload (maks ~1.5MB, ~2400px sisi terpanjang).
+- Gambar dikompresi otomatis di browser sebelum upload (maks ~1.5MB, ~2400px sisi terpanjang). EXIF dibaca **sebelum** kompresi, karena file hasil kompresi kehilangan metadata.
 - Thumbnail terpisah (≤150KB) dipakai di galeri; media penuh baru dimuat saat lightbox dibuka.
 - Video tidak dikompresi di client — batasi ukurannya lewat Admin > Settings.
 - Pagination (24 item/halaman) dan `loading="lazy"` mencegah query/berat berlebihan.

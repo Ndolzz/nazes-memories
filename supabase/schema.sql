@@ -1,6 +1,8 @@
 -- ============================================================================
 -- Naze's Memories — Supabase schema
 -- Jalankan di Supabase Dashboard > SQL Editor (satu kali, saat setup awal).
+-- Semua objek idempoten (create or replace / if not exists), jadi meng-upgrade
+-- dari versi lama cukup dengan menjalankan ulang file ini.
 -- ============================================================================
 
 -- 1) Tabel utama: memories -----------------------------------------------
@@ -69,36 +71,51 @@ alter table public.app_settings enable row level security;
 
 -- Publik: hanya boleh SELECT.
 drop policy if exists "public read memories" on public.memories;
-create policy "public read memories" on public.memories
+create policy "public read memories"
+  on public.memories
   for select using (true);
 
 -- Admin: full akses INSERT/UPDATE/DELETE.
 drop policy if exists "admin write memories" on public.memories;
-create policy "admin write memories" on public.memories
+create policy "admin write memories"
+  on public.memories
   for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "public read settings" on public.app_settings;
-create policy "public read settings" on public.app_settings
+create policy "public read settings"
+  on public.app_settings
   for select using (true);
 
 drop policy if exists "admin write settings" on public.app_settings;
-create policy "admin write settings" on public.app_settings
+create policy "admin write settings"
+  on public.app_settings
   for update using (public.is_admin()) with check (public.is_admin());
 
 -- 5) RPC: toggle favorite (aman untuk publik) -------------------------------
 -- Publik boleh mengubah is_favorite lewat RPC ini SAJA, bukan lewat UPDATE
 -- langsung — jadi tidak ada celah untuk mengubah kolom lain (title, media_url, dst).
-create or replace function public.toggle_favorite(memory_id uuid, value boolean)
+--
+-- CATATAN KEAMANAN (perbaikan): versi lama menerima parameter `value boolean`
+-- dari client, sehingga siapa pun bisa men-set is_favorite seluruh galeri
+-- secara sembarangan. Sekarang server yang menentukan nilai berikutnya
+-- (NOT is_favorite) dan hanya untuk SATU baris per panggilan — client tidak
+-- bisa memilih nilainya.
+create or replace function public.toggle_favorite(memory_id uuid)
 returns void
 language sql
 security definer
 as $$
-  update public.memories set is_favorite = value where id = memory_id;
+  update public.memories set is_favorite = not is_favorite where id = memory_id;
 $$;
 
-grant execute on function public.toggle_favorite(uuid, boolean) to anon, authenticated;
+grant execute on function public.toggle_favorite(uuid) to anon, authenticated;
 
 -- 6) RPC: increment views atomik ---------------------------------------------
+-- Tetap terbuka untuk publik (view counter memang data publik). Mitigasi
+-- penggelembungan angka dilakukan di client lewat dedup per-session
+-- (lihat DatabaseService.incrementViews): satu browser hanya menambah
+-- views satu kali per memory per session. Dedup di client bukan pengaman
+-- keras — perlakukan angka `views` sebagai estimasi, bukan data kritis.
 create or replace function public.increment_memory_views(memory_id uuid)
 returns void
 language sql

@@ -43,10 +43,13 @@ export function MemoryDetail() {
 
   async function toggleFavorite() {
     if (!memory) return
+    // Optimistic flip: UI langsung berubah, lalu RPC toggle server-side dijalankan.
+    // RPC tidak menerima nilai dari client — server membalik is_favorite sendiri,
+    // jadi jika dua tab men-toggle bersamaan, hasil akhirnya tetap konsisten arah toggle.
     const next = !memory.is_favorite
     setMemory({ ...memory, is_favorite: next })
     try {
-      await DatabaseService.setFavorite(memory.id, next)
+      await DatabaseService.setFavorite(memory.id)
     } catch {
       setMemory({ ...memory, is_favorite: !next })
     }
