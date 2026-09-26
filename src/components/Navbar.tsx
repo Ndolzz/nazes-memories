@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Icon } from './Icon'
+import { PushBell } from './PushBell'
 import { BRAND } from '@/config'
 
 const links = [
@@ -40,6 +41,9 @@ export function Navbar() {
       </nav>
 
       <div className="flex items-center gap-2">
+        {/* Lonceng notifikasi "memory baru" — hanya muncul jika push
+            didukung & VAPID key terisi (lihat PushBell.tsx). */}
+        <PushBell />
         <NavLink
           to="/search"
           className="flex items-center justify-center h-9 w-9 rounded-full text-ink-soft hover:bg-rose-50 transition-colors"

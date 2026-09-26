@@ -157,7 +157,13 @@ const paths: Record<string, JSX.Element> = {
   ),
   fullscreen: <path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" />,
   home: <path d="M4 11.5 12 4l8 7.5M6 10v8.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V10" />,
-  volume: <path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4ZM16.5 8.5a5 5 0 0 1 0 7" />
+  volume: <path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4ZM16.5 8.5a5 5 0 0 1 0 7" />,
+  bell: (
+    <>
+      <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z" />
+      <path d="M10.3 19a2 2 0 0 0 3.4 0" />
+    </>
+  )
 }
 
 export type IconName = keyof typeof paths
